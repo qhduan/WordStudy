@@ -1,17 +1,17 @@
 {
-  "name": "WordStudy",
-  "description": "Only Word Study Software",
+  "name": "Test",
+  "description": "Test Project",
   "version": "0.0.1",
   "author": {
     "name": "qhduan",
     "email": "mail@qhduan.com"
   },
   "keywords": [
-    "Word Study"
   ],
   "dependencies": {
-    "express": ">=4.4.1",
-    "body-parser": ">=1.3.0"
+    "express": "latest",
+    "body-parser": "latest",
+    "compression": "latest"
   },
   "engines": {
     "node": ">=0.8.0"
