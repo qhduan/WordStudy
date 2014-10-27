@@ -119,7 +119,7 @@ var DB = {
     // 数据库必须在这里有定义
     DB.create("cfg", {}); // 设置
     DB.create("dict", {}); // 字典缓存
-    DB.create("lib", {}); // 词库
+    DB.create("lib", []); // 词库
     DB.create("list", []); // 列表
     DB.create("ignore", []); // 忽略列表
     DB.list = ["cfg", "dict", "lib", "list", "ignore"];

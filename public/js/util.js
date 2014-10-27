@@ -31,50 +31,49 @@ var Dict = {
       callback(dict);
     });
   },
-  word: function (word, callback, no_download) {
-    if (!word || typeof callback != "function") {
+  word: function (word, callback) {
+    if (typeof word != "string") {
+      console.log("Dict.word invalid word", word);
       return;
     }
     
-    if (no_download) {
-      callback(dict[word]);
+    if (typeof callback != "function") {
+      return dict[word];
     } else {
       Dict.download([word], function (dict) {
         callback(dict[word]);
       });
     }
   },
-  words: function (words, callback, no_download) {
-    if (!$.isArray(words) || words.length <= 0 || typeof callback != "function") {
-      return;
+  test: function (words, callback) {
+    var dict = DB.load("dict");
+    var good = [];
+    var need = [];
+    for (var i in words) {
+      if (dict[words[i]]) good.push(words[i]);
+      else need.push(words[i]);
     }
     
-    if (no_download) {
-      var dict = DB.load("dict");
-      var success = {};
-      var fail = [];
-      for (var i in words) {
-        var word = words[i];
-        if (dict[word]) {
-          success[word] = dict[word]
-        } else {
-          fail.push(word);
-        }
-      }
-      callback({success: success, fail: fail});
-    } else {    
-      Dict.download(words, function (dict) {
-        var success = {};
-        var fail = [];
-        for (var i in words) {
-          var word = words[i];
-          if (dict[word]) {
-            success[word] = dict[word]
-          } else {
-            fail.push(word);
+    if (need.length == 0) {
+      return callback({success: words, fail: []});
+    } else {
+      $.post("/api/words/", {"words": JSON.stringify(need)}, function (data) {
+        if (data.success) {
+          var success = [];
+          var fail = [];
+          for (var i in words) {
+            if (dict[words[i]] || data.success[words[i]])
+              success.push(words[i]);
+            else
+              fail.push(words[i]);
           }
+          callback({success: success, fail: fail});
+        } else {
+          console.log(words, data.message);
+          callback({success: good, fail: need});
         }
-        callback({success: success, fail: fail});
+      }, "json").fail(function() {
+        callback({success: good, fail: need});
       });
     }
   }
