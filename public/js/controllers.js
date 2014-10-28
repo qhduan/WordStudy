@@ -35,7 +35,7 @@ WordStudyControllers.controller("mainController", function ($scope, $q) {
       var min = -1;
       list.forEach(function (word) {
         if (min == -1 || word.next < min) {
-          max = word.next;
+          min = word.next;
         }
       });
         
