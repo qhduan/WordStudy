@@ -4,6 +4,11 @@ var WordStudyControllers = angular.module("WordStudyControllers", []);
 
 
 WordStudyControllers.controller("mainController", function ($scope, $q) {
+  $scope.studyButtonDisabled = true;
+  $scope.reviewButtonDisabled = true;
+  $scope.info = "";
+  $scope.word = "";
+  $scope.def = "";
   
   function GetWord (word) {
     var deferred = $q.defer();
@@ -14,13 +19,6 @@ WordStudyControllers.controller("mainController", function ($scope, $q) {
     return deferred.promise;
   }
   
-  $scope.word = "";
-  $scope.def = "";
-  
-  $scope.setdef = function (def) {
-    $scope.def = def;
-  };
-  
   $scope.lookup = function () {
     $scope.def = "";
     GetWord($scope.word).then(function (def) {
@@ -29,6 +27,43 @@ WordStudyControllers.controller("mainController", function ($scope, $q) {
       $scope.def = "没找到";
     });
   };
+  
+  (function () {
+    var list = DB.load("list");
+    if ($.isArray(list) && list.length) {
+      var max = 0;
+      list.forEach(function (word) {
+        if (word.next > max) {
+          max = word.next;
+        }
+      });
+      if (max) {
+        $scope.info = "Next Review Time: " + DateToString(max);
+        
+        var now = new Date().getTime();
+        if (now < max) {
+          $scope.reviewButtonDisabled = false;
+        }
+      }
+    }
+    
+    list.forEach(function (word) {
+      if (word.count == -1) $scope.studyButtonDisabled = false;
+    });
+    
+    if ($scope.studyButtonDisabled) {
+      var ChoosenLibrary = Config.get("ChoosenLibrary");
+      if (ChoosenLibrary != "") {
+        var lib = DB.load("lib");
+        lib.forEach(function (l) {
+          if (l.name == ChoosenLibrary && l.learned < l.count) {
+            $scope.studyButtonDisabled = false;
+          }
+        });
+      }
+    }
+    
+  })();
 });
 
 
@@ -98,7 +133,7 @@ WordStudyControllers.controller("studyController", function ($scope, $q) {
       
       DB.save("list", list);
       
-      Alert("Study over", function () {
+      alertify.alert("Study over", function () {
         window.location.href = "#/main";
       });
     }
@@ -112,7 +147,7 @@ WordStudyControllers.controller("studyController", function ($scope, $q) {
     });
     console.log(list, availible);
     if (list.length <= 0 || availible.length <= 0) {
-      return Alert("No availible words in list", function () {
+      return alertify.alert("No availible words in list", function () {
         window.location.href="#/main";
       });
     }
@@ -251,7 +286,7 @@ WordStudyControllers.controller("reviewController", function ($scope, $document,
       
       DB.save("list", list);
       
-      Alert("Review over", function () {
+      alertify.alert("Review over", function () {
         window.location.href = "#/main";
       });
     }
@@ -317,7 +352,7 @@ WordStudyControllers.controller("reviewController", function ($scope, $document,
     });
     
     if (!availible.length) {
-      Alert("No word need review", function () {
+      alertify.alert("No word need review", function () {
         window.location.href = "#/main";
       });
       return;
@@ -352,7 +387,7 @@ WordStudyControllers.controller("listController", function ($scope, $q) {
   
   var list = DB.load("list");
   if (list.length <= 0) {    
-    return Alert("No words in list", function () {
+    return alertify.alert("No words in list", function () {
       window.location.href="#/main";
     });
   }
@@ -391,13 +426,15 @@ WordStudyControllers.controller("listController", function ($scope, $q) {
   
   function remove (word, date) {
     var deferred = $q.defer();
-    Confirm("Are you sure remove '" + word + "'?", function () {
-      list = list.filter(function (elem) {
-        if (elem.word == word && elem.date == date) return false;
-        return true;
-      });
-      DB.save("list", list);
-      deferred.resolve();
+    alertify.confirm("Are you sure remove '" + word + "'?", function (yes) {
+      if (yes) {
+        list = list.filter(function (elem) {
+          if (elem.word == word && elem.date == date) return false;
+          return true;
+        });
+        DB.save("list", list);
+        deferred.resolve();
+      }
     });
     return deferred.promise;
   }
@@ -408,18 +445,20 @@ WordStudyControllers.controller("listController", function ($scope, $q) {
   
   function removeSelect (select) {
     var deferred = $q.defer();
-    Confirm("Are you sure remove " + select.length + " words?", function () {
-      var selectWords = [];
-      select.each(function () {
-        selectWords.push($(this).data("word") + $(this).data("date"))
-      });
-      
-      list = list.filter(function (elem) {
-        if (selectWords.indexOf(elem.word + elem.date) != -1) return false;
-        return true;
-      });
-      DB.save("list", list);
-      deferred.resolve();
+    alertify.confirm("Are you sure remove " + select.length + " words?", function (yes) {
+      if (yes) {
+        var selectWords = [];
+        select.each(function () {
+          selectWords.push($(this).data("word") + $(this).data("date"))
+        });
+        
+        list = list.filter(function (elem) {
+          if (selectWords.indexOf(elem.word + elem.date) != -1) return false;
+          return true;
+        });
+        DB.save("list", list);
+        deferred.resolve();
+      }
     });
     return deferred.promise;
   }
@@ -427,7 +466,7 @@ WordStudyControllers.controller("listController", function ($scope, $q) {
   $scope.removeSelect = function () {
     var select = $("input:checked");
     if (select.length == 0) {
-      Alert("No word selected");
+      alertify.alert("No word selected");
     } else {
       removeSelect(select).then(ShowPage);
     }
@@ -456,6 +495,14 @@ WordStudyControllers.controller("libraryController", function ($scope, $route) {
     $scope.libs = lib.slice($scope.page * maxPage, $scope.page * maxPage + maxPage);
     $scope.info = ($scope.page + 1) + " / " + Math.max(Math.ceil(lib.length / maxPage), 1);
     
+    $scope.libs.forEach(function (l) {
+      if (l.name == Config.get("ChoosenLibrary")) {
+        l.checked = true;
+      } else {
+        l.checked = false;
+      }
+    });
+    
     $scope.prevDisabled = false;
     $scope.nextDisabled = false;
     
@@ -469,6 +516,12 @@ WordStudyControllers.controller("libraryController", function ($scope, $route) {
   }
   
   ShowPage();
+  
+  $scope.changeChoosenLibrary = function (name) {
+    Config.set("ChoosenLibrary", name);
+    alertify.success("The choosen library is changed to '" + name + "'");
+    ShowPage();
+  };
   
   $scope.reset = function (name) {
     var lib = DB.load("lib");
@@ -506,13 +559,13 @@ WordStudyControllers.controller("libraryController", function ($scope, $route) {
 			name = name.substr(0, name.length - 4);
 			
 			if (ext != "txt") {
-				Alert("Only text file support");
+				alertify.alert("Only text file support");
 				return;
 			}
 			
 			var reader = new FileReader();
 			reader.onerror = function () {
-				Alert("Load file faiure");
+				alertify.alert("Load file faiure");
 			};
 			reader.onload = function (e) {
 				var v = this.result;
@@ -530,26 +583,28 @@ WordStudyControllers.controller("libraryController", function ($scope, $route) {
         Dict.test(words, function (result) {
           if (result.success && result.success.length) {
             
-            function AddSuccess () {
-              var lib = DB.load("lib");
-              lib.splice(0, 0, {
-                name: name,
-                words: result.success,
-                learned: 0,
-                total: result.success.length
-              });
-              DB.save("lib", lib);
-              $route.reload();
+            function AddSuccess (yes) {
+              if (yes) {
+                var lib = DB.load("lib");
+                lib.splice(0, 0, {
+                  name: name,
+                  words: result.success,
+                  learned: 0,
+                  total: result.success.length
+                });
+                DB.save("lib", lib);
+                $route.reload();
+              }
             }
             
             if (result.fail.length > 0) {
-              Confirm("We cound " + words.length + " words, we could add " + result.success.length + " words, add them now?<br>Some words we don't have:<br>" + result.fail.join(", "),
+              alertify.confirm("We cound " + words.length + " words, we could add " + result.success.length + " words, add them now?<br>Some words we don't have:<br>" + result.fail.join(", "),
                 AddSuccess);
             } else {
-              Confirm("We cound " + words.length + " words, we could add all " + result.success.length + " words, add them now?", AddSuccess);
+              alertify.confirm("We cound " + words.length + " words, we could add all " + result.success.length + " words, add them now?", AddSuccess);
             }
           } else {
-            Alert("We found " + words.length + " words, but no words could add");
+            alertify.alert("We found " + words.length + " words, but no words could add");
           }
         });
 			};
@@ -619,36 +674,38 @@ WordStudyControllers.controller("manualController", function ($scope, $q) {
   $scope.add = function () {
     var input = $("input.goodWords:checked");
     if (input.length <= 0) {
-      Alert("No valid choosen word");
+      alertify.alert("No valid choosen word");
     } else {
       var words = [];
       input.each(function () {
         words.push($(this).data("word"));
       });
-      Confirm("Found " + words.length + " words, add them into list now?", function () {
-        var wl = DB.load("list");
-        var now = new Date().getTime();
-        var nwl = [];
-        for (var i in words) {
-          var e = {};
-          e.word = words[i];
-          e.date = now;
-          e.next = now;
-          e.count = -1;
-          e.fail = 0;
-          nwl.push(e);
-          now++;
+      alertify.confirm("Found " + words.length + " words, add them into list now?", function (yes) {
+        if (yes) {
+          var wl = DB.load("list");
+          var now = new Date().getTime();
+          var nwl = [];
+          for (var i in words) {
+            var e = {};
+            e.word = words[i];
+            e.date = now;
+            e.next = now;
+            e.count = -1;
+            e.fail = 0;
+            nwl.push(e);
+            now++;
+          }
+          DB.save("list", nwl.concat(wl));
+          
+          var ignore = DB.load("ignore");
+          for (var i in words) {
+            var word = words[i];
+            if (ignore.indexOf(word) == -1) ignore.push(word);
+          }
+          DB.save("ignore", ignore);
+          
+          window.location.href = "#/main";
         }
-        DB.save("list", nwl.concat(wl));
-        
-        var ignore = DB.load("ignore");
-        for (var i in words) {
-          var word = words[i];
-          if (ignore.indexOf(word) == -1) ignore.push(word);
-        }
-        DB.save("ignore");
-        
-        window.location.href = "#/main";
       });
     }
   };
@@ -664,7 +721,7 @@ WordStudyControllers.controller("manualController", function ($scope, $q) {
 
 
 
-WordStudyControllers.controller("settingController", function ($scope) {
+WordStudyControllers.controller("settingController", function ($scope, $route) {
   
   function Init () {
     $scope.info = DB.size()/1000 + " KBytes";
@@ -705,13 +762,13 @@ WordStudyControllers.controller("settingController", function ($scope) {
 			name = name.substr(0, name.length - 4);
 			
 			if (ext != "txt") {
-				Alert("Only text file support");
+				alertify.alert("Only text file support");
 				return;
 			}
 			
 			var reader = new FileReader();
 			reader.onerror = function () {
-				Alert("Load file faiure");
+				alertify.alert("Load file faiure");
 			};
 			reader.onload = function (e) {
 				var v = this.result;
@@ -723,15 +780,19 @@ WordStudyControllers.controller("settingController", function ($scope) {
           j = JSON.parse(v);
         } catch (e) {
           console.log(e);
-          Alert("Save data parse error");
+          alertify.alert("Save data parse error");
           return;
         }
         
-        Confirm("Are you sure load the save data?", function () {
-          for (var i in j) {
-            window.localStorage.setItem(i, j[i]);
+        alertify.confirm("Are you sure load the save data?", function (yes) {
+          if (yes) {
+            for (var i in j) {
+              window.localStorage.setItem(i, j[i]);
+            }
+            //window.location.href = "#/main";
+            alertify.success("Data was loaded successfully");
+            $route.reload();
           }
-          window.location.href = "#/main";
         });
 			};
 			reader.readAsText(file);
@@ -739,9 +800,13 @@ WordStudyControllers.controller("settingController", function ($scope) {
   };
   
   $scope.reset = function () {
-    Confirm("Are you sure reset all data? You can't restore it.", function () {
-      DB.reset();
-      window.location.href = "#/main";
+    alertify.confirm("Are you sure reset all data? You can't restore it.", function (yes) {
+      if (yes) {
+        DB.reset();
+        //window.location.href = "#/main";
+        alertify.success("All data have reseted");
+        $route.reload();
+      }
     });
   };
   
@@ -749,10 +814,12 @@ WordStudyControllers.controller("settingController", function ($scope) {
     Config.set("StudyCount", $scope.maxStudyCount);
     Config.set("ReviewCount", $scope.maxReviewCount);
     Config.set("WordSelectLength", $scope.maxSelectLength);
+    alertify.success("All settings have saved");
   };
   
   $scope.load = function () {
     Config.reset();
+    alertify.success("All settings restored to default");
     Init();
   };
   

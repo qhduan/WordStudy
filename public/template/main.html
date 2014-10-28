@@ -13,18 +13,23 @@
         <div class="panel-heading text-center">
           <h2>Word Study</h2>
         </div>
-        <div class="panel-body text-center" style="margin-top: 100px;">
-          <h3>Look up a word:</h3>
-          <input type="text" class="form-control text-center" ng-model="word" ng-change="lookup()">
-        </div>
-        <div class="panel-body text-center" style="margin-top: 200px;">
-          <a href="#/study" class="btn btn-default btn-lg">Study</a>
-          <a href="#/review" class="btn btn-default btn-lg">Review</a>
-          <a href="#/list" class="btn btn-default btn-lg">List</a>
-          <br>
-          <a href="#/library" class="btn btn-default btn-lg">Library</a>
-          <a href="#/manual" class="btn btn-default btn-lg">Manual</a>
-          <a href="#/setting" class="btn btn-default btn-lg">Setting</a>
+        <div class="panel-body">
+          <div class="text-center" style="margin-top: 100px;">
+            <h3>Look up a word:</h3>
+            <input type="text" class="form-control text-center" ng-model="word" ng-change="lookup()">
+          </div>
+          <div class="text-center" style="margin-top: 50px; color: orange;">
+            <label ng-bind="info"></label>
+          </div>
+          <div class="text-center" style="margin-top: 100px;">
+            <a href="#/study" class="btn btn-default btn-lg" ng-disabled="studyButtonDisabled">Study</a>
+            <a href="#/review" class="btn btn-default btn-lg" ng-disabled="reviewButtonDisabled">Review</a>
+            <a href="#/list" class="btn btn-default btn-lg">List</a>
+            <br>
+            <a href="#/library" class="btn btn-default btn-lg">Library</a>
+            <a href="#/manual" class="btn btn-default btn-lg">Manual</a>
+            <a href="#/setting" class="btn btn-default btn-lg">Setting</a>
+          </div>
         </div>
       </div>
     </div>

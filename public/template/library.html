@@ -17,7 +17,7 @@
               <tbody>
                 <tr ng-repeat="lib in libs">
                   <td>
-                    <input type="radio" data-name="{{ lib.name }}">
+                    <input type="radio" ng-click="changeChoosenLibrary(lib.name)" ng-checked="lib.checked">
                   </td>
                   <td>{{ lib.name }}</td>
                   <td>{{ lib.learned }}</td>
