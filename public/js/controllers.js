@@ -31,18 +31,20 @@ WordStudyControllers.controller("mainController", function ($scope, $q) {
   (function () {
     var list = DB.load("list");
     if ($.isArray(list) && list.length) {
-      var max = 0;
+      var now = new Date().getTime();
+      var min = -1;
       list.forEach(function (word) {
-        if (word.next > max) {
+        if (min == -1 || word.next < min) {
           max = word.next;
         }
       });
-      if (max) {
-        $scope.info = "Next Review Time: " + DateToString(max);
         
-        var now = new Date().getTime();
-        if (now < max) {
+      if (min != -1) {
+        if (now > min) {
           $scope.reviewButtonDisabled = false;
+          $scope.info = "Review It Now!";
+        } else {
+          $scope.info = "Next Review Time: " + DateToString(max);
         }
       }
     }
