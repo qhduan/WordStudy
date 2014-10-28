@@ -95,7 +95,7 @@ var DB = {
     try {
       j = JSON.parse(window.localStorage.getItem(name));
     } catch (e) {
-      Alert("Database parse error: " + name);
+      alertify.alert("Database parse error: " + name);
       console.log("Database parse error", name);
     }
     return j;

@@ -44,7 +44,7 @@ WordStudyControllers.controller("mainController", function ($scope, $q) {
           $scope.reviewButtonDisabled = false;
           $scope.info = "Review It Now!";
         } else {
-          $scope.info = "Next Review Time: " + DateToString(max);
+          $scope.info = "Next Review Time: " + DateToString(min);
         }
       }
     }
@@ -739,7 +739,7 @@ WordStudyControllers.controller("settingController", function ($scope, $route) {
     var s = {};
     DB.list.forEach(function (key) {
       if (key == "dict") return;
-      s[key] = DB.load(key);
+      s[key] = JSON.stringify(DB.load(key));
     });
     
     s = JSON.stringify(s);
