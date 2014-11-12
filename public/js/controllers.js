@@ -104,7 +104,8 @@ WordStudyControllers.controller("studyController", function ($scope, $q) {
   function ShowPage () {
     if (words.length > 0) {
       $scope.word = words[0].word;
-      $scope.def = words[0].def;
+      //$scope.def = words[0].def;
+      $scope.def = Dict.word(words[0].word);
       $scope.info = "" + (success.length + 1) + " / " + (success.length + words.length);
       $scope.randomColor();
     } else {
