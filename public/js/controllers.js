@@ -34,7 +34,7 @@ WordStudyControllers.controller("mainController", function ($scope, $q) {
       var now = new Date().getTime();
       var min = -1;
       list.forEach(function (word) {
-        if (min == -1 || (word.count >= 0 && word.next < min)) {
+        if (word.count >= 0 && (min == -1 || word.next < min) ) {
           min = word.next;
         }
       });
@@ -296,9 +296,7 @@ WordStudyControllers.controller("reviewController", function ($scope, $document,
   }
   
   $scope.remember = function (f) {
-    Dict.word(availible[0].word, function (def) {
-      $scope.def = def;
-    });
+    $scope.def = Dict.word(availible[0].word);
     if (f) { // remember
       $scope.rememberStyle = {display: "none"};
       $scope.checkStyle = {display: ""};
@@ -353,6 +351,8 @@ WordStudyControllers.controller("reviewController", function ($scope, $document,
         availible.push(word);
       }
     });
+    
+    console.log("loaded", availible.length, " availible words");
     
     if (!availible.length) {
       alertify.alert("No word need review", function () {
