@@ -65,7 +65,6 @@
   }
   
   function TestWords (words, callback) {
-    var dict = DB.load("dict");
     var good = [];
     var need = [];
     for (var i in words) {

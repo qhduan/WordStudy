@@ -118,11 +118,10 @@ var DB = {
     // 这里是数据库的空库默认类型，或者说初始化系统中这些数据库
     // 数据库必须在这里有定义
     DB.create("cfg", {}); // 设置
-    DB.create("dict", {}); // 字典缓存
     DB.create("lib", []); // 词库
     DB.create("list", []); // 列表
     DB.create("ignore", []); // 忽略列表
-    DB.list = ["cfg", "dict", "lib", "list", "ignore"];
+    DB.list = ["cfg", "lib", "list", "ignore"];
   }
 };
 

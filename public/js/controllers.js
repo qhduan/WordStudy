@@ -34,7 +34,7 @@ WordStudyControllers.controller("mainController", function ($scope, $q) {
       var now = new Date().getTime();
       var min = -1;
       list.forEach(function (word) {
-        if (min == -1 || word.next < min) {
+        if (min == -1 || (word.count >= 0 && word.next < min)) {
           min = word.next;
         }
       });
@@ -148,7 +148,7 @@ WordStudyControllers.controller("studyController", function ($scope, $q) {
     list.forEach(function (word) {
       if (word.count == -1) availible.push(word);
     });
-    console.log(list, availible);
+    //console.log(list, availible);
     if (list.length <= 0 || availible.length <= 0) {
       return alertify.alert("No availible words in list", function () {
         window.location.href="#/main";
@@ -620,8 +620,10 @@ WordStudyControllers.controller("libraryController", function ($scope, $route) {
 
 WordStudyControllers.controller("manualController", function ($scope, $q) {
   $scope.input = "";
+  $scope.info = "Input text above, press 'parse'";
   $scope.goodWords = [];
   $scope.badWords = [];
+  $scope.wordsCheck = {};
   
   function TestWords (words) {
     var deferred = $q.defer();
@@ -631,7 +633,7 @@ WordStudyControllers.controller("manualController", function ($scope, $q) {
     return deferred.promise;
   }
   
-  $scope.testCheck = function (word) {
+  function TestCheck (word) {
     if (word.length >= Config.get("WordSelectLength")
       && IgnoreExist(word) == false
       && ListExist(word) == false) {
@@ -644,6 +646,7 @@ WordStudyControllers.controller("manualController", function ($scope, $q) {
   $scope.parse = function () {
     $scope.goodWords = [];
     $scope.badWords = [];
+    
     var str = $scope.input;
     str = str.replace(/[^a-zA-Z-]+/g, function () {
       return "\n";
@@ -657,7 +660,7 @@ WordStudyControllers.controller("manualController", function ($scope, $q) {
     var words = [];
     str.forEach(function (word) {
       word = word.toLowerCase();
-      if (words.indexOf(word) == -1) words.push(word);
+      if (word.trim().length > 1 && words.indexOf(word) == -1) words.push(word);
     });
     
     TestWords(words).then(function (result) {
@@ -671,6 +674,21 @@ WordStudyControllers.controller("manualController", function ($scope, $q) {
         }
       });
       $scope.badWords = result.fail;
+      $scope.goodWords.forEach(function (elem, i, a) {
+        if (TestCheck(elem)) {
+          $scope.wordsCheck[elem] = true;
+          selectedCount++;
+        } else {
+          $scope.wordsCheck[elem] = false;
+        }
+      });
+      
+      var selectedCount = 0;
+      Object.keys($scope.wordsCheck).forEach(function (elem, i, a) {
+        if ($scope.wordsCheck[elem]) selectedCount++;
+      });
+      
+      $scope.info = $scope.goodWords.length + " good, " + $scope.badWords.length + " bad, " + selectedCount + " selected";
     });
   };
   
@@ -714,11 +732,14 @@ WordStudyControllers.controller("manualController", function ($scope, $q) {
   };
   
   $scope.changeCheck = function (word) {
-    $("input.goodWords[type='checkbox']").each(function () {
-      if ($(this).data("word") == word) {
-        $(this).prop("checked", !$(this).prop("checked"));
-      }
+    $scope.wordsCheck[word] = !Boolean($scope.wordsCheck[word]);
+      
+    var selectedCount = 0;
+    Object.keys($scope.wordsCheck).forEach(function (elem, i, a) {
+      if ($scope.wordsCheck[elem]) selectedCount++;
     });
+    
+    $scope.info = $scope.goodWords.length + " good, " + $scope.badWords.length + " bad, " + selectedCount + " selected";
   };
 });
 
