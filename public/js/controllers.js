@@ -396,7 +396,7 @@ WordStudyControllers.controller("listController", function ($scope, $q) {
   }
   
   function ShowPage () {
-    $scope.info = ($scope.page + 1) + " / " + Math.max(Math.ceil(list.length / maxPage), 1);
+    $scope.info = list.length + " words, page " +  ($scope.page + 1) + " / " + Math.max(Math.ceil(list.length / maxPage), 1);
     $scope.words = list.slice($scope.page * maxPage, $scope.page * maxPage + maxPage);
     
     $scope.prevDisabled = false;

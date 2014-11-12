@@ -1,5 +1,5 @@
 
-var WordStudy = angular.module("WordStudy", ["ngRoute", "WordStudyControllers"]);
+var WordStudy = angular.module("WordStudy", ["ngRoute", "ngAnimate", "WordStudyControllers"]);
 
 WordStudy.config(["$routeProvider", function ($routeProvider) {
   $routeProvider.

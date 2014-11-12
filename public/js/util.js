@@ -1,37 +1,55 @@
+(function () {
+  // 本地词典缓存
+  var dict = {};
 
-
-// 本地词典缓存
-var Dict = {
-  download: function (words, callback) {
-    var dict = DB.load("dict");
-    var need = [];
-    for (var i in words) {
-      if (dict[words[i]]) continue;
-      need.push(words[i]);
-    }
+  function DownloadWords (words, callback) {
     
-    if (need.length == 0) {
-      callback(dict);
-      return;
-    }
-    
-    // words is an array
-    $.post("/api/words/", {"words": JSON.stringify(need)}, function (data) {
-      if (data.success) {
-        for (var i in data.success) {
-          dict[i] = data.success[i];
+    if (words.length > 200) {
+      var batch = Math.ceil(words.length / 200);
+      
+      var ok = 0;
+      function Over () {
+        ok++;
+        if (ok == batch) {
+          callback(dict);
         }
-        DB.save("dict", dict);
-        callback(dict);
-      } else {
-        console.log(words, data.message);
-        callback(dict);
       }
-    }, "json").fail(function() {
-      callback(dict);
-    });
-  },
-  word: function (word, callback) {
+      
+      for (var i = 0; i < batch; i++) {
+        Dict.download(words.slice(i*200, i*200+200), Over);
+      }
+    } else {
+      
+      var need = [];
+      
+      for (var i in words) {
+        if (dict[words[i]]) continue;
+        need.push(words[i]);
+      }
+      
+      if (need.length == 0) {
+        callback(dict);
+        return;
+      }
+      
+      // words is an array
+      $.post("/api/words/", {"words": JSON.stringify(need)}, function (data) {
+        if (data.success) {
+          for (var i in data.success) {
+            dict[i] = data.success[i];
+          }
+          callback(dict);
+        } else {
+          console.log(words, data.message);
+          callback(dict);
+        }
+      }, "json").fail(function() {
+        callback(dict);
+      });
+    }
+  }
+    
+  function GetWord (word, callback) {
     if (typeof word != "string") {
       console.log("Dict.word invalid word", word);
       return;
@@ -44,8 +62,9 @@ var Dict = {
         callback(dict[word]);
       });
     }
-  },
-  test: function (words, callback) {
+  }
+  
+  function TestWords (words, callback) {
     var dict = DB.load("dict");
     var good = [];
     var need = [];
@@ -77,7 +96,14 @@ var Dict = {
       });
     }
   }
-};
+  
+  window.Dict = {
+    download: DownloadWords,
+    word: GetWord,
+    test: TestWords
+  };
+
+})();
 
 
 // 测试列表中是否存在某单词
